@@ -1,0 +1,372 @@
+* install laravel
+  - composer create-project laravel\laravel (namaproject)
+* install helper
+  - composer require laravel\helpers
+* install laravel pdf
+  - composer require barryvdh/ laravel-dompdf
+* create database (nama database)
+  - setting database file .env
+* setting laravel pdf
+  - add in file app.php
+  'PDF' => Barryvdh\DomPDF\Facade::class,
+* setting migration user
+  - add $table->string('role');
+* migrate user to setting middleware
+  - php artisan migrate
+* insert tabel user with tinker
+  - php artisan tinker
+	$user = new App\Models\User;
+	$user->name = 'admin';
+	$user->email = 'admin@gmail.com';
+	$user->role = 'admin';
+	$user->password = bcrypt('admin');
+	$user->remember_token = str_random(60);
+	$user->save();
+* create login
+  - create route = Route::get('/login',[AuthController::class.'login'])->name('login');
+		   Route::post('/postlogin'.[AuthController::class,'postlogin']);
+  - create controller = php artisan make:controller AuthController
+			create method login
+				- return view('auth.login');
+			create method postlogin
+				- if (Auth::attempt($request->only('email','password'))) {
+            			  return redirect('dashboard.index');}
+				  return redirect('/login');
+  - create method index(AuthController)
+  - create view = create form action="/postlogin" method="POST"
+		  create token = {{csrf_field()}}
+* create dashboard = Route::get
+		     DashboardController
+		     Dashboard.index
+* setting template
+  - add template to folder public
+  - setting master
+  - setting src/href == {{asset('template/')}}
+
+* create logout
+  authcontroller = fun logout = Auth::logout();
+* create middleware = php artisan make middleware CheckRole
+  public function add = , ...$roles
+   if (in_array($request->user()->role,$roles)) {
+            return $next($request);
+        }
+
+        return redirect('/dashboard');
+
+  registrasi middleware = kernel.php = 'checkrole' => \App\Http\Middleware\CheckRole::class,
+  create route name = Route::get('/login',[AuthController::class,'login'])->name('login');
+  create route group = Route::group(['middleware'=>['auth','checkrole:admin']],function(){
+                           (isi dengan route)
+	               });
+
+* crud data siswa = php artisan make:migration create_siswa_table == php artisan make:model siswa
+   Migration Siswa
+	$table->string('nisn')
+	$table->string('nis')
+	$table->string('nama')
+	$table->text('alamat')
+	$table->string('tlpn')
+
+   Model Siswa   
+	protected $table = ('siswa');
+    	public $timestamp = false;
+    	protected $fillable = ['nisn','nis','nama','alamat','tlpn'];
+
+  create route = Route::post('/siswa'.[SiswaController::class,'index']);
+  create controller = php artisan:make controller SiswaController
+  create function index = $data_siswa = Siswa::all()
+			  return view('siswa.index', compact('data_siswa'));
+  create view = add table
+  in table = @php @i=1;  foreach $data_siswa as $siswa  td{{$siswa->nisn}} @php $i++;
+
+
+  insert data = route::get('/siswa/create',[SiswaController::class,'create'])
+  create view siswa.create
+  create method create = return view('siswa.create')
+  tanpa @method('PUT')
+  create route = route::post('/siswa',[SiswaController::class,'store'])
+  create method store = Request $request
+
+
+  edit data = index-edit = href= /siswa/{{$siswa->id}}/edit
+  route = Route::get('/siswa/{id}/edit',[SiswaController::class,'edit']);
+  create method edit =  $siswa = Siswa::all() return view('siswa.edit', compact('siswa'));
+  edit view siswa.edit = form action="siswa/{{$siswa->id}}"
+  add @method('PUT') after form
+  add token @csrf
+  add input value="{{$siswa->nisn}}"
+  create route Route::put('/siswa/{id}', [SiswaController::class,'update']);
+  add controller SiswaController method update = Request $request,$id
+  add property = $siswa::find($id)
+                 $siswa->update($request->all());
+                 $return redirect('/siswa')
+  
+  
+  create parameter delete = href ="/siswa/{{$id}}/delete"
+  create route delete = route::get('siswa/{id}/delete',[SiswaController::class,'destroy'])
+  create property = $siswa = Siswa::find($id)
+                    $siswa->delete();
+
+
+
+* crud kelas
+  create migration = php artisan make:migrtation create_kelas_table
+  $table->string('nama')
+  $table->string('kompetensikeahlian')
+  php artisan migrate
+
+  create model kelas = php artisan make:model Kelas
+  protected $table = ('Kelas')
+  public $timestamp = false;
+  protected $fillable = ['nama','kompetensikeahlian']
+
+  create route kelas = Route::get('/kelas',[KelasController::class,'index'])
+  create controller = php artisan make:controller KelasController
+  create method index = $data_kelas = Kelas::all()
+  			return view('kelas',compact('data_kelas'))
+
+  make view = kelas.index
+  in table = @php @i=1;  foreach $data_kelas as $siswa  td{{$kelas->nisn}} @php $i++;
+  
+  make kelas create = setting route = Route::get('/siswa/create',[SiswaController::class,'create'])
+  make method create = fun create() return view('kelas.create')
+  make view = kelas.create
+  create route = Route::post('/kelas',[KelasController::class,'store'])
+  make method store = $kelas = Kelas::create($request->all());
+		      return redirect('/kelas')
+
+  make edit = Route::get('/kelas/{id}/edit',[KelasController::class,'edit']);
+  
+  make method edit($id) = $kelas = Kelas::find($id)
+			  return view('kelas.edit',compact('kelas'))
+
+  make route update = Route::put('/kelas',[KelasController::class,'update'])
+  create method update(Request $request,$id)
+			$kelas = Kelas::find($id)
+			$kelas->update($request->all())
+			return redirect('/kelas')
+  create method destroy($id) = $kelas = Kelas::find($id)
+			       $kelas->delete();
+			       return redirect('/kelas')
+
+
+
+* crud data spp
+  create migration = php artisan make:migration create_spp_table
+  $table->string('tahun')
+  $table->string('nominal')
+  php artisan migrate
+
+  make model spp = php artisan make:model Spp
+  protected $table = ('spp')
+  public $timestamp = false;
+  protected $fillable = ['tahun','nominal']
+
+  make controller SppController
+  create method index
+  create method insert
+  create method update
+  create method delete
+
+* crud data Petugas
+  create route
+  create class PetugasController
+  create method index
+  add property index = $data_petugas = User::where('role','petugas')->get();
+        	       return view('petugas.index', compact('data_petugas'));
+
+  create insert petugas create route
+  make view create petugas
+  create route post petugas store
+  create method store PetugasController
+
+  create edit petugas = route
+  create update route
+  create delete petugas
+
+
+--------Relasi---------
+
+* relasi siswa -> user
+    tabel siswa =
+	fun user = return $this->belongsTo(User::class,'user_id','id')
+    tabel user = 
+	fun siswa = return $this->hasOne(Siswa::clas)
+
+
+  add siswa+add user
+  add field user_id
+  add property insert table user
+   	$user = new \App\Models\User;
+        $user->name = $request->nama;
+        $user->email = $request->email;
+        $user->password = bcrypt('siswa');
+        $user->role = 'siswa';
+        $user->remember_token = str_random(60);
+        $user->save();
+  add property insert table siswa
+  $request->request->add(['user_id' => $user->id])
+
+  add view create input email
+
+  add route group siswa
+
+  edit create
+  update fun update = $siswa->user->update([
+            	          'email' => $request->email,
+                      ]);
+
+  edit delete = $siswa->user->delete();
+
+* relasi siswa->kelas
+  add kelas_id tabel dan model
+  model siswa = fun kelas = return $this->belongsTo(Kelass::class)
+  model kelas = fun siswa = return $this->hasMany(Siswa::class) 
+
+  update create siswa
+  foreach kelas as kelas = option value='$kelas->id' > {{$kelas->nama}}
+  edit kelas add controller = $kelas = Kelas::all();
+
+
+* relasi siswa->spp
+  add spp_id tabel dan model
+  model siswa = fun spp = return $this->belongsTo(Spp::all)
+  model Spp = fun siswa = return $this->hasMany(Siswa::all)
+
+  update create siswa
+  foreach spp as spp = option value='$spp->id' > {{$spp->tahun}} - {{$spp->nominal}}
+  edit kelas add controller = $Spp = Spp::all();
+
+  // dont forget to add name="spp_id"
+
+
+
+* transaksi pembayaran
+  make migration transaksi pembayaran = php artisan make:migration create_transaksi_table
+					$table->integer('petugas_id',11)
+					$table->integer('siswa_id',11)
+					$table->string('bulan')
+					$table->integer('bayar')
+  php artisan migrate
+  make model = php artisan make:model Pembayaran
+	protected $table = ('pembayaran')
+	public $timestamp = false;
+	protected $fillable = ['petugas_id','siswa_id','bulan','bayar']
+
+  make controller = php artisan make:controller PembayaranController
+  create route = Route::get('/pembayaran',[PembayaranController::class,'index'])
+  create method index return view('pembayaran.index')
+  make view pembayaran.index
+
+  // relasi pembayaran
+  pembayaran->user
+  model pembayaran = fun user = return $this->belongsTo(User::class,'petugas_id','id')
+  model user = fun pembayaran = return $this->hasMany(Pembayaran::class)
+
+  pembayaran->siswa
+  model pembayaran = fun siswa = return $this->belongsTo(Siswa::class)
+  model siswa = fun pembayaran = return $this->hasMany(Pembayaran::class)
+
+  create pembayaran = create route = Route::get('/pembayaran/create',[PembayaranController::class,'create'])
+  create method create = return view('/pembayaran/create')
+  make view pembayaran.create
+
+  make route post = Route::post('/pembayaran',[PembayaranController::class,'store'])
+  create method post(Request $request)
+	$siswa = Siswa::where('nisn',$request->nisn)->get();
+	foreach($siswa as $val)
+		$siswa_id = $val->id
+	endforeach
+	$pembayaran = Pembayaran::create([
+		'petugas_id' = auth()->user()->id,
+		'siswa_id' = $siswa_id,
+		'bulan' = $request->bulan,
+		'bayar' = $request->bayar,
+	])
+
+	return redirect('pembayaran.index')
+
+
+  create edit pembayaran
+  create route edit = Route::get('/pembayaran/{id}/edit',[PembayaranController::class,'edit']);
+  create method edit = return view('pembayaran.edit')
+  create view pembayaran.edit
+
+  create put pembayaran
+  create route update = Route::put('/pembayaran/{id}',[PembayaranController::class,'update']);
+
+  create destroy pembayaran
+  create route destroy = Route::get('/pembayaran/{id}/delete',[PembayaranController::class,'destroy']);
+  make method destroy($id) = $pembayaran = Pembayaran::find($id)
+			$pembayaran->delete();
+			return redirect('/pembayaran')
+
+  create history pembayaran = setting route = Route::get('/history',[HistoryController::class,'index'])
+  create method index = $pembayaran = Pembayaran::all()
+			$user = User::find(auth()->user->id)
+ 			return view('history.index',compact('pembayaran','user'))
+  create view(history.index) =  format date = <small>{{$pembayaran->created_at->format('d M,Y')}}</small>
+
+* export pdf = 
+  install laravel pdf
+  	- composer require barryvdh/ laravel-dompdf
+  create database (nama database)
+  	- setting database file .env
+  setting laravel pdf
+  	- add in file app.php
+  	'PDF' => Barryvdh\DomPDF\Facade::class,
+
+  add route export pdf = Route::get('/export',[SiswaController::class,'exportpdf'])
+  add method exportpdf
+  
+
+\\\\\ FINISHING \\\\\
+
+*edit master blade = add @if (auth()->user()->role == 'admin' || auth()->user()->role == 'petugas')
+
+add flash massage = add return redirect('/dashboard')->with('sukses','Login Berhasil');
+add master blade = 
+	 @if (session('sukses'))
+        <div data-notify="container" class="alert alert-dismissible alert-success alert-notify animated fadeInDown" role="alert" data-notify-position="top-center" style="display: inline-block; margin: 0px auto; position: relative; transition: all 0.5s ease-in-out 0s; z-index: 1080; top: 15px; left: 0px; right: 0px; animation-iteration-count: 1;">
+            <span class="alert-icon ni ni-bell-55" data-notify="icon"></span>
+            <div class="alert-text" <="" div="">
+                <span class="alert-title" data-notify="title"> Bootstrap Notify</span>
+                <span data-notify="message">Turning standard Bootstrap alerts into awesome notifications</span>
+            </div>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+        </div>
+        @endif
+
+
+* validasi = 
+	  $validasi = $request->validate([
+            'nama' => 'required',
+            'email' => 'required|unique:users',
+            'nisn' => 'required',
+            'nis' => 'required',
+            'alamat' => 'required',
+            'tlpn' => 'required',
+        ]);
+
+* validasi index = 
+	 	<div class="form-group">
+                  <label for="exampleInputText1">NISN</label>
+                  <input name="nisn" type="text" class="form-control @error('nisn') is-invalid @enderror" id="exampleInputText1" placeholder="Nisn">
+                  @error('nisn')
+                  <span id="exampleInputEmail1-error" class="error invalid-feedback">Harap Memasukkan Nisn</span>
+                  @enderror
+                </div>
+
+* Cari
+	add di fun index siswa(Request $request)
+	if($request->has('cari'))
+		data_siswa = Siswa::where('nama','LIKE','&'.$request->cari.'&')->get()
+	}else{
+		$data_siswa = Siswa::all();
+	}
+
+   	add di view index siswa
+	tambah di form cari method="GET" action="/siswa"
+	tambah di input cari = name="cari"
